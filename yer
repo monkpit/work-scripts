@@ -1,0 +1,26 @@
+#! /usr/bin/env bash
+filename="year_$(date '+%Y')"
+directory=$HOME/.yearend
+fullpath=$directory/$filename
+
+if [[ ! -e $fullpath ]]; then
+    mkdir -p "$directory"
+    touch "$fullpath"
+    echo "Created $fullpath"
+else
+    echo "Opening existing file at $fullpath"
+fi
+
+if [[ -x $(command -v "$VS_CODE") ]]; then
+    editorCommand="$VS_CODE"
+elif [[ -x $(command -v code) ]]; then
+    editorCommand="code"
+elif [[ -x $(command -v vim) ]]; then
+    editorCommand="vim"
+elif [[ -x $(command -v "$EDITOR") ]]; then
+    editorCommand="$EDITOR"
+else
+    echo 'No suitable editor found. Not opening file.'
+    exit
+fi
+$editorCommand "$fullpath"

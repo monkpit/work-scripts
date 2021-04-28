@@ -1,0 +1,49 @@
+#! /usr/bin/env bash
+# on mac - requires 'gnu-sed' - can be obtained with 'brew install gnu-sed'
+# also needs to be accessible from 'sed'
+yesterdayHeader="#Yesterday"
+todayHeader="#Today"
+todayTemplate="
+#TIME TRACKING
+
+## QA
+
+## Product
+
+## Admin"
+filename=$(date '+%Y-%m-%d_%A')
+directory=$HOME/.standup
+(
+    cd "$directory" || exit
+    git pull origin master
+) 1> /dev/null
+fullpath=$directory/$filename
+previous=$(find "$directory" -name "*-*-*_*" | sort | tail -1)
+previousContents=$(sed -e "0,/${todayHeader}/d" "$previous")
+if [[ ! -e $fullpath ]]; then
+    mkdir -p "$directory"
+    touch "$fullpath"
+    echo "Created $fullpath"
+    printf "%s\n%s\n\n%s\n%s\n" "$yesterdayHeader" "$previousContents" "$todayHeader" "$todayTemplate" | tee "$fullpath"
+else
+    echo "Opening existing file at $fullpath"
+fi
+(
+    cd "$directory" || exit
+    git add .
+    git commit -m"$filename"
+    git push origin master
+) 1> /dev/null &
+if [[ -x $(command -v "$VS_CODE") ]]; then
+    editorCommand="$VS_CODE"
+elif [[ -x $(command -v code) ]]; then
+    editorCommand="code"
+elif [[ -x $(command -v vim) ]]; then
+    editorCommand="vim"
+elif [[ -x $(command -v "$EDITOR") ]]; then
+    editorCommand="$EDITOR"
+else
+    echo 'No suitable editor found. Not opening file.'
+    exit
+fi
+$editorCommand "$fullpath"
